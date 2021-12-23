@@ -7,7 +7,7 @@
 // MIDI 
 //
 MIDI_CREATE_DEFAULT_INSTANCE();
-int LISTEN_CHANNEL = 4;
+//int LISTEN_CHANNEL = 4;
 int LISTEN_CHANNEL = MIDI_CHANNEL_OFF;  // Don't listen
 int SEND_CHANNEL = 1;
 int VELOCITY = 127;
@@ -72,7 +72,7 @@ void setup()
     }
 
     delay(2000);         // wait for initializing
-    display_text("MIDI Sequencer", null);
+    display_text("MIDI Sequencer", "");
 }
 
 
@@ -80,14 +80,10 @@ void display_text(char *line1, char *line2) {
     oled.clearDisplay(); // clear display
     oled.setTextSize(1);         // text size
     oled.setTextColor(WHITE);    // text color
-    if (line1 != null) {
-        oled.setCursor(0, 10);   // position to display
-        oled.println(line1);     // text to display
-    }
-    if (line2 != null) {
-        oled.setCursor(0, 20);   // position to display
-        oled.println(line2);     // text to display
-    }
+    oled.setCursor(0, 10);   // position to display
+    oled.println(line1);     // text to display
+    oled.setCursor(0, 20);   // position to display
+    oled.println(line2);     // text to display
     oled.display();              // show on OLED
 }
 
@@ -125,10 +121,10 @@ void ping_moog() {
       chord_index = 0;
     }
 
-    int delay_time = 1024 - analogRead(SPEED);
+    int delay_time = 1024 - analogRead(TEMPO_IN);
     char buffer[128];
     sprintf(buffer, "got delay = %d", delay_time);
-    display_text(null, buffer);
+    display_text("", buffer);
     
     MIDI.sendNoteOn(play_note, VELOCITY, SEND_CHANNEL);  // Send a Note
     delay(delay_time);                                   // Wait for a second
