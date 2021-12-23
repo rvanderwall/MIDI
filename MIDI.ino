@@ -30,7 +30,9 @@ Adafruit_SSD1306 oled(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, -1);
 int ON_BOARD_LED = 13;
 int PANEL_LED = 10;
 int BUTTON = 8;
-int SPEED = A0;
+int TEMPO_IN = A0;
+int ROOT_IN = A1;
+int SCALE_MODE_IN = A2;
 
 
 //
@@ -40,14 +42,28 @@ int ROOT_NOTE = 60;
 int minor_chord[] = {0, 3, 7, 10};
 int chord_index = 0;
 
+//
+// Opertaional Variables
+//
+#define MODE_INIT       0
+#define MODE_ARP_135    1
+#define MODE_ARP_1357   2
+#define MODE_ARP_SCALE  3
+#define MODE_SEQ        4
+
+int CURRENT_MODE = MODE_INIT;
 
 void setup()
 {
-    pinMode(LED_BUILTIN, OUTPUT);
+    pinMode(ON_BOARD_LED, OUTPUT);
     pinMode(PANEL_LED, OUTPUT);
-    pinMode(SPEED, INPUT);
+
+    pinMode(TEMPO_IN, INPUT);
+    pinMode(ROOT_IN, INPUT);
+    pinMode(SCALE_MODE_IN, INPUT);
 
     pinMode(BUTTON, INPUT_PULLUP);
+
     MIDI.begin(LISTEN_CHANNEL);
 
     if (!oled.begin(SSD1306_SWITCHCAPVCC, 0x3C)) {
@@ -75,6 +91,8 @@ void display_text(char *line1, char *line2) {
     oled.display();              // show on OLED
 }
 
+void display_status(int speed, int musical_mode, int op_mode) {
+}
 
 void blink_error(int err_code) {
   while (true){
