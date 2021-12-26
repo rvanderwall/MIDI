@@ -1,7 +1,7 @@
 #include <MIDI.h>
 #include <Wire.h>
-#include <Adafruit_GFX.h>
-#include <Adafruit_SSD1306.h>
+
+#include "Display.h"
 
 //
 // MIDI 
@@ -12,16 +12,6 @@ int LISTEN_CHANNEL = MIDI_CHANNEL_OFF;  // Don't listen
 int SEND_CHANNEL = 1;
 int VELOCITY = 127;
 
-
-//
-// OLED Display screen
-//
-#define SCREEN_WIDTH 128 // OLED display width,  in pixels
-#define SCREEN_HEIGHT 32 // OLED display height, in pixels
-
-// https://arduinogetstarted.com/tutorials/arduino-oled
-// declare an SSD1306 display object connected to I2C
-Adafruit_SSD1306 oled(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, -1);
 
 
 //
@@ -43,7 +33,7 @@ int minor_chord[] = {0, 3, 7, 10};
 int chord_index = 0;
 
 //
-// Opertaional Variables
+// Operational Variables
 //
 #define MODE_INIT       0
 #define MODE_ARP_135    1
@@ -72,22 +62,35 @@ void setup()
     }
 
     delay(2000);         // wait for initializing
-    display_text("MIDI Sequencer", "");
+    display_text("MIDI Sequencer", "Version 1.0", "");
+//    display_big_text("RECORDING");
 }
 
+char const *note_chars[] = {
+  "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"
+};
 
-void display_text(char *line1, char *line2) {
-    oled.clearDisplay(); // clear display
-    oled.setTextSize(1);         // text size
-    oled.setTextColor(WHITE);    // text color
-    oled.setCursor(0, 10);   // position to display
-    oled.println(line1);     // text to display
-    oled.setCursor(0, 20);   // position to display
-    oled.println(line2);     // text to display
-    oled.display();              // show on OLED
+char const * root_to_note(int root){
+    char buf[3];
+    root = root - 60;
+    if (root < 0) {
+      root = 0;
+    }
+    if (root > 11) {
+      root = 11;
+    }
+    return note_chars[root];
 }
 
-void display_status(int speed, int musical_mode, int op_mode) {
+void display_status(int tempo, int musical_mode, int root, int op_mode) {
+    char l1_buffer[32];
+    sprintf(l1_buffer, "Tempo: %d", tempo);
+    char l2_buffer[32];
+    sprintf(l2_buffer, "%s(%s)y", "Dorian/minor", root_to_note(root));
+    char l3_buffer[32];
+    sprintf(l3_buffer, "%s", "arp_135");
+    display_text(l1_buffer, l2_buffer, l3_buffer);
+
 }
 
 void blink_error(int err_code) {
@@ -115,22 +118,25 @@ void pulse() {
 
 void ping_moog() {
     digitalWrite(ON_BOARD_LED, HIGH);
+    int tempo = analogRead(TEMPO_IN);
+    int delay_time = 1024 - tempo;
+
+    int root = analogRead(ROOT_IN);
+    ROOT_NOTE = 60 + (12.0 * root / 1024.0);
+
     int play_note = ROOT_NOTE + minor_chord[chord_index];
     chord_index++;
     if (chord_index > 3) {
       chord_index = 0;
     }
 
-    int delay_time = 1024 - analogRead(TEMPO_IN);
-    char buffer[128];
-    sprintf(buffer, "got delay = %d", delay_time);
-    display_text("", buffer);
+    display_status(tempo, 0, play_note, 0);
+    digitalWrite(ON_BOARD_LED, LOW);
     
     MIDI.sendNoteOn(play_note, VELOCITY, SEND_CHANNEL);  // Send a Note
     delay(delay_time);                                   // Wait for a second
     MIDI.sendNoteOff(play_note, 0, SEND_CHANNEL);        // Stop the note
     delay(delay_time);                                   // Wait for a second
-    digitalWrite(ON_BOARD_LED, LOW);
 }
 
 
