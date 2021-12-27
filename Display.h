@@ -1,5 +1,9 @@
+#ifndef DISPLAY_H
+#define DISPLAY_H
+
 #include <Adafruit_GFX.h>
 #include <Adafruit_SSD1306.h>
+#include "led.h"
 
 //
 // OLED Display screen
@@ -11,7 +15,12 @@
 // declare an SSD1306 display object connected to I2C
 Adafruit_SSD1306 oled(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, -1);
 
-
+void init_display() {
+    if (!oled.begin(SSD1306_SWITCHCAPVCC, 0x3C)) {
+      Serial.println(F("SSD1306 allocation failed"));
+      blink_error(3);
+    }
+}
 
 void display_big_text(String line1) {
     oled.clearDisplay();
@@ -35,3 +44,4 @@ void display_text(String line1, String line2, String line3) {
     oled.display();
 }
 
+#endif

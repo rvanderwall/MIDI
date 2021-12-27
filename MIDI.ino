@@ -1,7 +1,9 @@
 #include <MIDI.h>
 #include <Wire.h>
 
+#include "hw_map.h"
 #include "Display.h"
+#include "led.h"
 #include "music.h"
 
 //
@@ -13,38 +15,20 @@ MIDI_CREATE_DEFAULT_INSTANCE();
 #define SEND_CHANNEL  1
 #define VELOCITY    127
 
-
-
-//
-// Hardware mapping
-//
-#define ON_BOARD_LED  13
-#define TEMPO_IN      A0
-#define SCALE_MODE_IN A1
-#define ROOT_IN       A2
-
-#define SELECT_UP     12
-#define SELECT_DOWN   11
-#define RUN           10
-#define RECORD         9
-
 //
 // MUSIC variables
 //
-int root_note = 60;
-int minor_chord[] = {0, 3, 7, 10};
-int chord_index = 0;
+int note_index = 0;
 
 //
-// Operational Variables
+// Operational Modes
 //
 #define MODE_INIT       0
 #define MODE_ARP_135    1
 #define MODE_ARP_1357   2
 #define MODE_ARP_SCALE  3
 #define MODE_SEQ        4
-
-int CURRENT_MODE = MODE_INIT;
+int current_mode = MODE_INIT;
 
 void setup()
 {
@@ -60,71 +44,49 @@ void setup()
     pinMode(RECORD, INPUT_PULLUP);
 
     MIDI.begin(LISTEN_CHANNEL);
-
-    if (!oled.begin(SSD1306_SWITCHCAPVCC, 0x3C)) {
-      Serial.println(F("SSD1306 allocation failed"));
-      blink_error(3);
-    }
+    init_display();
 
     delay(2000);         // wait for initializing
     display_text("MIDI Sequencer", "Version 1.0", "");
-//    display_big_text("RECORDING");
 }
 
+void record() {
+   display_big_text("RECORDING");
+}
 
-void display_status(int tempo, int musical_mode, int root, int op_mode) {
+void display_status(int tempo, int musical_mode, int note, int op_mode) {
     char l1_buffer[32];
     sprintf(l1_buffer, "Tempo: %d", tempo);
     char l2_buffer[32];
-    sprintf(l2_buffer, "%s(%s)y", "Dorian/minor", root_to_note(root));
+    sprintf(l2_buffer, "%s(%s)", mode_to_string(musical_mode), note_to_string(note));
     char l3_buffer[32];
     sprintf(l3_buffer, "%s", "arp_135");
     display_text(l1_buffer, l2_buffer, l3_buffer);
-
-}
-
-void blink_error(int err_code) {
-  while (true){
-     for (int c=0; c < err_code; c++) {
-       digitalWrite(ON_BOARD_LED, LOW);
-       delay(150);
-       digitalWrite(ON_BOARD_LED, HIGH);
-       delay(150);  
-     }
-     delay(300);
-  }
 }
 
 
-void pulse() {
-    digitalWrite(ON_BOARD_LED, LOW);
-    delay(50);
-    digitalWrite(ON_BOARD_LED, HIGH);
-    delay(50);
-}
-
-
-void ping_moog() {
-    digitalWrite(ON_BOARD_LED, HIGH);
-    int tempo = analogRead(TEMPO_IN);
+void send_note_to_moog() {
+    OB_LED_ON;
+    int tempo = get_tempo();
     int delay_time = 1024 - tempo;
+    int root_note = get_root_note();
+    int mode = get_musical_mode();
 
-    int root = analogRead(ROOT_IN);
-    root_note = 60 + (12.0 * root / 1024.0);
-
-    int play_note = root_note + minor_chord[chord_index];
+    scale = get_scale_from_mode(mode);          // Scale of notes to chose from
+    note_offset = scale_notes[chord_index];     // note offsets (triad, 7th, etc,)
+    int play_note = root_note + scale[note_offset];
     chord_index++;
-    if (chord_index > 3) {
+    if (chord_index > 7) {
       chord_index = 0;
     }
 
     display_status(tempo, 0, play_note, 0);
-    digitalWrite(ON_BOARD_LED, LOW);
-    
+    OB_LED_OFF;
+
     MIDI.sendNoteOn(play_note, VELOCITY, SEND_CHANNEL);  // Send a Note
-    delay(delay_time);                                   // Wait for a second
+    delay(delay_time);                                   // Wait for a moment
     MIDI.sendNoteOff(play_note, 0, SEND_CHANNEL);        // Stop the note
-    delay(delay_time);                                   // Wait for a second
+    delay(delay_time);                                   // Wait for a moment
 }
 
 
@@ -135,6 +97,6 @@ void loop()
 //    }
 
     if (digitalRead(RUN)== LOW) {
-        ping_moog();
+        send_note_to_moog();
     }
 }
