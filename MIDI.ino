@@ -2,33 +2,36 @@
 #include <Wire.h>
 
 #include "Display.h"
+#include "music.h"
 
 //
 // MIDI 
 //
 MIDI_CREATE_DEFAULT_INSTANCE();
-//int LISTEN_CHANNEL = 4;
-int LISTEN_CHANNEL = MIDI_CHANNEL_OFF;  // Don't listen
-int SEND_CHANNEL = 1;
-int VELOCITY = 127;
+//#define LISTEN_CHANNEL  
+#define LISTEN_CHANNEL MIDI_CHANNEL_OFF    // Don't listen
+#define SEND_CHANNEL  1
+#define VELOCITY    127
 
 
 
 //
 // Hardware mapping
 //
-int ON_BOARD_LED = 13;
-int PANEL_LED = 10;
-int BUTTON = 8;
-int TEMPO_IN = A0;
-int ROOT_IN = A1;
-int SCALE_MODE_IN = A2;
+#define ON_BOARD_LED  13
+#define TEMPO_IN      A0
+#define SCALE_MODE_IN A1
+#define ROOT_IN       A2
 
+#define SELECT_UP     12
+#define SELECT_DOWN   11
+#define RUN           10
+#define RECORD         9
 
 //
 // MUSIC variables
 //
-int ROOT_NOTE = 60;
+int root_note = 60;
 int minor_chord[] = {0, 3, 7, 10};
 int chord_index = 0;
 
@@ -46,13 +49,15 @@ int CURRENT_MODE = MODE_INIT;
 void setup()
 {
     pinMode(ON_BOARD_LED, OUTPUT);
-    pinMode(PANEL_LED, OUTPUT);
 
     pinMode(TEMPO_IN, INPUT);
     pinMode(ROOT_IN, INPUT);
     pinMode(SCALE_MODE_IN, INPUT);
 
-    pinMode(BUTTON, INPUT_PULLUP);
+    pinMode(RUN, INPUT_PULLUP);
+    pinMode(SELECT_UP, INPUT_PULLUP);
+    pinMode(SELECT_DOWN, INPUT_PULLUP);
+    pinMode(RECORD, INPUT_PULLUP);
 
     MIDI.begin(LISTEN_CHANNEL);
 
@@ -66,21 +71,6 @@ void setup()
 //    display_big_text("RECORDING");
 }
 
-char const *note_chars[] = {
-  "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"
-};
-
-char const * root_to_note(int root){
-    char buf[3];
-    root = root - 60;
-    if (root < 0) {
-      root = 0;
-    }
-    if (root > 11) {
-      root = 11;
-    }
-    return note_chars[root];
-}
 
 void display_status(int tempo, int musical_mode, int root, int op_mode) {
     char l1_buffer[32];
@@ -108,10 +98,8 @@ void blink_error(int err_code) {
 
 void pulse() {
     digitalWrite(ON_BOARD_LED, LOW);
-    digitalWrite(PANEL_LED, HIGH);
     delay(50);
     digitalWrite(ON_BOARD_LED, HIGH);
-    digitalWrite(PANEL_LED, LOW);
     delay(50);
 }
 
@@ -122,9 +110,9 @@ void ping_moog() {
     int delay_time = 1024 - tempo;
 
     int root = analogRead(ROOT_IN);
-    ROOT_NOTE = 60 + (12.0 * root / 1024.0);
+    root_note = 60 + (12.0 * root / 1024.0);
 
-    int play_note = ROOT_NOTE + minor_chord[chord_index];
+    int play_note = root_note + minor_chord[chord_index];
     chord_index++;
     if (chord_index > 3) {
       chord_index = 0;
@@ -146,7 +134,7 @@ void loop()
 //      ping()
 //    }
 
-    if (digitalRead(BUTTON)== HIGH) {
+    if (digitalRead(RUN)== LOW) {
         ping_moog();
     }
 }
