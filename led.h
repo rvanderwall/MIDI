@@ -20,7 +20,7 @@ void blink_error(int err_code) {
 }
 
 
-void pulse(led) {
+void pulse() {
     digitalWrite(ON_BOARD_LED, LOW);
     delay(50);
     digitalWrite(ON_BOARD_LED, HIGH);

@@ -15,10 +15,6 @@ MIDI_CREATE_DEFAULT_INSTANCE();
 #define SEND_CHANNEL  1
 #define VELOCITY    127
 
-//
-// MUSIC variables
-//
-int note_index = 0;
 
 //
 // Operational Modes
@@ -47,7 +43,7 @@ void setup()
     init_display();
 
     delay(2000);         // wait for initializing
-    display_text("MIDI Sequencer", "Version 1.0", "");
+    display_text("MIDI Sequencer", "Version 1.1", "");
 }
 
 void record() {
@@ -60,7 +56,7 @@ void display_status(int tempo, int musical_mode, int note, int op_mode) {
     char l2_buffer[32];
     sprintf(l2_buffer, "%s(%s)", mode_to_string(musical_mode), note_to_string(note));
     char l3_buffer[32];
-    sprintf(l3_buffer, "%s", "arp_135");
+    sprintf(l3_buffer, "%s", op_mode_to_string(op_mode));
     display_text(l1_buffer, l2_buffer, l3_buffer);
 }
 
@@ -70,17 +66,11 @@ void send_note_to_moog() {
     int tempo = get_tempo();
     int delay_time = 1024 - tempo;
     int root_note = get_root_note();
-    int mode = get_musical_mode();
-
-    scale = get_scale_from_mode(mode);          // Scale of notes to chose from
-    note_offset = scale_notes[chord_index];     // note offsets (triad, 7th, etc,)
-    int play_note = root_note + scale[note_offset];
-    chord_index++;
-    if (chord_index > 7) {
-      chord_index = 0;
-    }
-
-    display_status(tempo, 0, play_note, 0);
+    int m_mode = get_musical_mode();
+    int o_mode = get_op_mode();
+    int play_note = get_next_note(root_note, m_mode, o_mode);
+    
+    display_status(tempo, m_mode, play_note, o_mode);
     OB_LED_OFF;
 
     MIDI.sendNoteOn(play_note, VELOCITY, SEND_CHANNEL);  // Send a Note
