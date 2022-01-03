@@ -28,17 +28,7 @@ int current_mode = MODE_INIT;
 
 void setup()
 {
-    pinMode(ON_BOARD_LED, OUTPUT);
-
-    pinMode(TEMPO_IN, INPUT);
-    pinMode(ROOT_IN, INPUT);
-    pinMode(SCALE_MODE_IN, INPUT);
-
-    pinMode(RUN, INPUT_PULLUP);
-    pinMode(SELECT_UP, INPUT_PULLUP);
-    pinMode(SELECT_DOWN, INPUT_PULLUP);
-    pinMode(RECORD, INPUT_PULLUP);
-
+    setup_io();
     MIDI.begin(LISTEN_CHANNEL);
     init_display();
 
@@ -50,27 +40,31 @@ void record() {
    display_big_text("RECORDING");
 }
 
-void display_status(int tempo, int musical_mode, int note, int op_mode) {
+void display_status(int tempo, int musical_mode, int note, int chord_num) {
     char l1_buffer[32];
     sprintf(l1_buffer, "Tempo: %d", tempo);
     char l2_buffer[32];
     sprintf(l2_buffer, "%s(%s)", mode_to_string(musical_mode), note_to_string(note));
     char l3_buffer[32];
-    sprintf(l3_buffer, "%s", op_mode_to_string(op_mode));
+    sprintf(l3_buffer, "%s", chord_num_to_string(chord_num));
     display_text(l1_buffer, l2_buffer, l3_buffer);
 }
 
 
 void send_note_to_moog() {
     OB_LED_ON;
-    int tempo = get_tempo();
+    int select_change = get_select_change();
+    update_cur_chord_num(select_change);
+
+    int tempo = GET_TEMPO_VALUE;
     int delay_time = 1024 - tempo;
+
     int root_note = get_root_note();
     int m_mode = get_musical_mode();
-    int o_mode = get_op_mode();
-    int play_note = get_next_note(root_note, m_mode, o_mode);
-    
-    display_status(tempo, m_mode, play_note, o_mode);
+    int chord_num = get_chord_num();
+    int play_note = get_next_note(root_note, m_mode, chord_num);
+
+    display_status(tempo, m_mode, play_note, chord_num);
     OB_LED_OFF;
 
     MIDI.sendNoteOn(play_note, VELOCITY, SEND_CHANNEL);  // Send a Note
@@ -86,7 +80,7 @@ void loop()
 //      ping()
 //    }
 
-    if (digitalRead(RUN)== LOW) {
+    if run() {
         send_note_to_moog();
     }
 }

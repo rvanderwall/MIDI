@@ -10,9 +10,9 @@
 void blink_error(int err_code) {
   while (true){
      for (int c=0; c < err_code; c++) {
-       digitalWrite(ON_BOARD_LED, LOW);
+       OB_LED_ON;
        delay(150);
-       digitalWrite(ON_BOARD_LED, HIGH);
+       OB_LED_OFF;
        delay(150);
      }
      delay(300);
@@ -21,9 +21,9 @@ void blink_error(int err_code) {
 
 
 void pulse() {
-    digitalWrite(ON_BOARD_LED, LOW);
+    OB_LED_ON;
     delay(50);
-    digitalWrite(ON_BOARD_LED, HIGH);
+    OB_LED_OFF;
     delay(50);
 }
 
