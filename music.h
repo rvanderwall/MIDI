@@ -109,14 +109,14 @@ const int seventh[] = {1, 3, 5, 7};
 const int scale_notes[] = {1, 2, 3, 4, 5, 6, 7, 8};
 
 const int * chord_map[] = {triad, seventh, scale_notes};
-const int * note_counts[] = {3, 4, 8};
+const int note_counts[] = {3, 4, 8};
 
 const int * get_chord_from_chord_num(int chord_num) {
     chord_num = chord_num % 3;
     return chord_map[chord_num];
 }
 
-int get_note_count_from_chord_num(int chord_num) {
+const int get_note_count_from_chord_num(int chord_num) {
     chord_num = chord_num % 3;
     return note_counts[chord_num];
 }
@@ -132,7 +132,14 @@ char const *chord_name_chars[] = {
   "Triad-135", "Seventh-1357", "Scale-12345678", "Triad+-135", "Seventh+-1357", "Scale+-1-8-1"
 };
 
+//
+// MUSIC variables
+//
+int note_index = 0;
+int direction = 1;
 int cur_chord_num = 0;
+
+
 void update_cur_chord_num(int update_direction) {
     if (update_direction == 0){
         return;
@@ -156,15 +163,10 @@ char const *chord_num_to_string(int chord_num){
 }
 
 
-//
-// MUSIC variables
-//
-int note_index = 0;
-int direction = 1;
 
 int get_next_note(int root_note, int m_mode, int chord_num) {
-    const int *chord = get_chord_from_mode(chord_num);
-    int notes_in_chord = get_node_count_from_mode(chord_num);
+    const int *chord = get_chord_from_chord_num(chord_num);
+    int notes_in_chord = get_note_count_from_chord_num(chord_num);
     int direction_flag = get_direction_flag_from_chord_num(chord_num);
 
     const int *scale = get_scale_from_mode(m_mode);     // Scale of notes to chose from

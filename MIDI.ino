@@ -33,7 +33,7 @@ void setup()
     init_display();
 
     delay(2000);         // wait for initializing
-    display_text("MIDI Sequencer", "Version 1.1", "");
+    display_text("MIDI Sequencer", "Version 1.1.2", "");
 }
 
 void record() {
@@ -80,7 +80,7 @@ void loop()
 //      ping()
 //    }
 
-    if run() {
+    if IS_RUN {
         send_note_to_moog();
     }
 }

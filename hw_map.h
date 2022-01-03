@@ -19,12 +19,10 @@
 #define GET_ROOT_VALUE analogRead(ROOT_IN)
 #define GET_MODE_VALUE analogRead(SCALE_MODE_IN)
 
+#define IS_RUN (digitalRead(RUN) == LOW)
 
-bool run() {
-    return digitalRead(RUN) == LOW
-}
 
-int debounce(switch_pin) {
+int debounce(int switch_pin) {
     delay(1);
     if (digitalRead(switch_pin) != LOW) {
         return 0;
